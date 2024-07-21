@@ -7,23 +7,49 @@ import { Chat } from '@/data/types';
 
 interface SidebarProps {
   onNewChat: (newChat: Chat) => void;
-  onSelectChat: (chat: Chat) => void;
+  onSelectChat: (chat: Chat | null) => void;
   currentChatId: number | null;
+  onRemoveChat: (remove: boolean | null) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onNewChat, onSelectChat, currentChatId }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onNewChat, onSelectChat, currentChatId, onRemoveChat}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [chatItems, setChatItems] = useState<Chat[]>(Chats);
 
   const handleClick = () => {
-    console.log(Chats)
     const newChat: Chat = {
       id: chatItems.length + 1,
+      name: `Chat ${chatItems.length + 1}`,
       message: [{ id: 1, message: "Hey, how can I help you?" }],
     };
     setChatItems([...chatItems, newChat]);
-     (newChat);
-     Chats.push(newChat);
+    Chats.push(newChat);
+    onNewChat(newChat);
+  };
+
+  const handleRemoveChat = (chatId: number) => {
+    const updatedChats = chatItems.filter(chat => chat.id !== chatId);
+    setChatItems(updatedChats);
+    const chatIndex = Chats.findIndex(chat => chat.id === chatId);
+    if (chatIndex !== -1) {
+      Chats.splice(chatIndex, 1);
+    }
+
+    if (currentChatId === chatId) {
+      console.log('Setting current chat to null');
+      onRemoveChat(true);
+    }
+  };
+
+  const handleModifyChat = (chatId: number, newName: string) => {
+    const updatedChats = chatItems.map(chat =>
+      chat.id === chatId ? { ...chat, name: newName } : chat
+    );
+    setChatItems(updatedChats);
+    const chatIndex = Chats.findIndex(chat => chat.id === chatId);
+    if (chatIndex !== -1) {
+      Chats[chatIndex].name = newName;
+    }
   };
 
   return (
@@ -40,6 +66,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onNewChat, onSelectChat, currentChatI
                 chat={chat} 
                 isSelected={chat.id === currentChatId} 
                 onClick={() => onSelectChat(chat)} 
+                onRemoveChat={handleRemoveChat}
+                onModifyChat={handleModifyChat}
               />
             ))}
           </ul>

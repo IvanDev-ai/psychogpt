@@ -5,15 +5,20 @@ interface ChatListItemProps {
   chat: Chat;
   isSelected: boolean;
   onClick: () => void;
+  onRemoveChat: (chatId: number) => void;
+  onModifyChat: (chatId: number, newName: string) => void;
 }
 
-const ChatListItem: React.FC<ChatListItemProps> = ({ chat, isSelected, onClick }) => {
+const ChatListItem: React.FC<ChatListItemProps> = ({ chat, isSelected, onClick, onRemoveChat, onModifyChat }) => {
   const [menuVisible, setMenuVisible] = useState(false);
+  const [newName, setNewName] = useState(chat.name || `Chat ${chat.id}`);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleOutsideClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     if (!target.closest('.menu-container') && !target.closest('.group-edit')) {
       setMenuVisible(false);
+      setIsEditing(false);
     }
   };
 
@@ -29,13 +34,45 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, isSelected, onClick }
     setMenuVisible(!menuVisible);
   };
 
+  const handleRemoveChat = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    onRemoveChat(chat.id);
+  };
+
+  const handleModifyChat = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    setIsEditing(true);
+    setMenuVisible(false);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewName(e.target.value);
+  };
+
+  const handleNameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onModifyChat(chat.id, newName);
+    setIsEditing(false);
+  };
+
   return (
     <li
-      className={`group/item relative my-2 flex items-center justify-between rounded-xl p-2 text-sm cursor-pointer 
+      className={`group/item relative my-2 flex items-center justify-between rounded-xl p-1 text-sm cursor-pointer 
       ${isSelected ? 'bg-slate-100 text-black' : 'bg-gray-900 text-white hover:bg-slate-100 hover:text-black'}`}
-      onClick={onClick}
+     
     >
-      <span className="truncate">{`Chat ${chat.id}`}</span>
+      {isEditing ? (
+        <form onSubmit={handleNameSubmit} className="flex-1">
+          <input
+            type="text"
+            value={newName}
+            onChange={handleNameChange}
+            className="w-full p-1 text-black rounded"
+          />
+        </form>
+      ) : (
+        <span className="truncate  w-full p-2" onClick={onClick}>{chat.name || `Chat ${chat.id}`}</span>
+      )}
       <a
         href="#"
         className="group-edit invisible relative flex items-center whitespace-nowrap rounded-full py-1 pl-4 pr-3 text-sm text-slate-500 transition hover:bg-slate-200 group-hover/item:visible"
@@ -54,6 +91,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, isSelected, onClick }
                   href="#"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   role="menuitem"
+                  onClick={handleRemoveChat}
                 >
                   Remove chat
                 </a>
@@ -61,6 +99,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, isSelected, onClick }
                   href="#"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   role="menuitem"
+                  onClick={handleModifyChat}
                 >
                   Modify name
                 </a>
