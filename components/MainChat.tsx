@@ -1,6 +1,9 @@
+// /src/components/Mainchat.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Chat, Message } from '@/data/types';
 import { Chats } from '@/data/chats';
+import { predict } from '../utils/model';
 
 interface MainchatProps {
   currentChat: Chat | null;
@@ -18,7 +21,7 @@ const Mainchat: React.FC<MainchatProps> = ({ currentChat, setCurrentChat }) => {
     }
   }, [currentChat]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (currentChat && inputValue.trim() !== '') {
       const newMessage: Message = {
         id: messages.length + 1,
@@ -39,6 +42,22 @@ const Mainchat: React.FC<MainchatProps> = ({ currentChat, setCurrentChat }) => {
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
+
+      // Generar la respuesta de IA
+      const aiResponse = await predict(inputValue);
+      const responseMessage: Message = {
+        id: updatedMessages.length + 1,
+        message: aiResponse,
+      };
+
+      const finalMessages = [...updatedMessages, responseMessage];
+      setMessages(finalMessages);
+
+      if (chatIndex !== -1) {
+        Chats[chatIndex].message = finalMessages;
+      }
+
+      setCurrentChat({ ...updatedChat, message: finalMessages });
     }
   };
 
